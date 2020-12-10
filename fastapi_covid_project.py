@@ -13,15 +13,10 @@ class Beacon(BaseModel):
 	until : datetime 
 
 class BeaconPatchSchema(BaseModel):
-	from_: Optional[datetime]
-	id : Optional[str]
+	from_: Optional[datetime] = None
+	id : Optional[str] = None
 	rssi : Optional[list]
-	until : Optional[datetime]
-
-
-@app.get("/")
-def read_root():
-	return {"Hello":"World"}
+	until : datetime
 
 @app.get("/beacons/{uuid}", response_model = Beacon)
 def get_beacon_by_uuid(uuid):
@@ -32,10 +27,10 @@ def get_beacon_by_uuid(uuid):
 
 @app.post("/")
 def make_beacons(beacon: Beacon):
-	uuid = python_conn.insert(beacon.json())
-	return uuid,diccionario
+	beacon_dict = python_conn.insert(beacon.json())
+	return beacon_dict
 
-@app.patch("/{uuid}")
+@app.patch("/beacons/{uuid}", response_model = Beacon)
 def update_by_uuid(uuid, patch: BeaconPatchSchema):
 	beacon_data = python_conn.find_one(uuid)
 	if beacon_data is None:
@@ -43,5 +38,5 @@ def update_by_uuid(uuid, patch: BeaconPatchSchema):
 	beacon_model = Beacon(**beacon_data)
 	update_data = patch.dict(exclude_unset = True)
 	update_beacon = beacon_model.copy(update = update_data)
-
-	return update_beacon
+	beacon = python_conn.update(uuid,update_beacon.json())
+	return beacon
