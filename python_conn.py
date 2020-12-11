@@ -3,6 +3,8 @@ import uuid
 import ast
 import json
 
+beacons_keys_list = ["from_","id","rssi","until"]
+
 def connect():
 	coon = None
 
@@ -20,42 +22,57 @@ def connect():
 		print(error)
 
 	return conn
-'''
-	finally:
-		if conn is not None:
-			conn.close()
-			print('Database connection closed.')'''
 
-def insert(beacon_):
+def insert(beacons):
 	conn = connect()
 	cur = conn.cursor()
-	beacon = ast.literal_eval(beacon_)
-	beacon['uuid'] = str(uuid.uuid4())
-	values_ = (beacon['uuid'],beacon['id'],beacon['from_'],beacon['until'],beacon['rssi'])
-	insert_query ='INSERT INTO beacons (uuid,id,from_,until,rssi) VALUES (%s,%s,%s,%s,%s)' 
-	cur.execute(insert_query,values_)
+	uuid_ = uuid.uuid4()
+	val = [tuple(ast.literal_eval(beacon.json()).values() )for beacon in beacons]
+	values = [(str(uuid_),) + val[i] for i in range(len(val))]
+	beacons.append({'session_uuid':str(uuid_)})
+	insert_query ='INSERT INTO beacons (uuid,from_,id,rssi,until) VALUES (%s,%s,%s,%s,%s)' 
+	cur.executemany(insert_query,values)
 	conn.commit()
-	return beacon
+	return beacons
 
-def find_one(uuid_):
+def find_one(session_uuid):
 	conn = connect()
 	cur = conn.cursor()
 	find_query = 'SELECT (from_,id,rssi,until) FROM beacons WHERE (uuid = %s)'
-	cur.execute(find_query,(uuid_,))
-	response = cur.fetchone()
-	bea_list = response[0].strip('(\\)\"').split('\"')
-	beacon = {"from_":bea_list[0],"id":bea_list[1].strip(','),"rssi":ast.literal_eval(bea_list[2]),"until":bea_list[4]}
-	return beacon
+	cur.execute(find_query,(session_uuid,))
+	response = cur.fetchall()
+	resp = [response[i][0].strip("'()").split('"') for i in range(len(response))]
+	li_be = [dict.fromkeys(beacons_keys_list,None) for i in range(len(resp))]
+	for li,re in zip(li_be,resp):
+		li["from_"] = re[1]
+		li["id"] = re[2].strip(',')
+		li["rssi"] = list(map(int, re[3].strip('{}').split(',')))
+		li["until"] = re[5]
+	return li_be
 
-def update(uuid,beacon_):
+def update(uuid_,session,up_session):
 	conn = connect()
 	cur = conn.cursor()
-	beacon = ast.literal_eval(beacon_)
-	beacon['uuid'] = uuid
-	values_ = (beacon['rssi'],beacon['until'],beacon['uuid'])
-	update_query = 'UPDATE beacons set rssi = %s , until = %s WHERE (uuid = %s)'
-	cur.execute(update_query,values_)
-	conn.commit()
-	return beacon
+	insert_values = list()
+	update_values = list()
+	val_up_se = [tuple(ast.literal_eval(sess.json()).values() )for sess in up_session]
+	id_se = [se['id']for se in session]
+	values_up_se = [(str(uuid_),) + val_up_se[i] for i in range(len(val_up_se))]
+	for va in values_up_se:
+		if va[2] not in id_se:
+			insert_values.append(va)
+		else:
+			update_values.append(tuple([va[3],va[4],va[0],va[2]]))
+	if len(update_values) != 0:
+		update_query = 'UPDATE beacons set rssi = %s , until = %s WHERE (uuid = %s and id = %s)'
+		cur.executemany(update_query,update_values)
+		conn.commit()
+	if len(insert_values) != 0:
+		insert_query ='INSERT INTO beacons (uuid,from_,id,rssi,until) VALUES (%s,%s,%s,%s,%s)' 
+		cur.executemany(insert_query,insert_values)
+		conn.commit()
+	up_ss = find_one(uuid_)
+	up_ss.append({"uuid":str(uuid_)})
+	return up_ss
 
 
