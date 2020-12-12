@@ -2,6 +2,7 @@ import psycopg2
 import uuid
 import ast
 import json
+from psycopg2.extras import DictCursor
 
 beacons_keys_list = ["from_","id","rssi","until"]
 
@@ -15,7 +16,7 @@ def connect():
 			host = 'localhost',
 			database = 'beacons_db',
 			user = 'postgres',
-			password = "gaia_user"
+			password = "%froac$"
 			)
 
 	except (Exception, psycopg2.DatabaseError) as error:
@@ -29,26 +30,21 @@ def insert(beacons):
 	uuid_ = uuid.uuid4()
 	val = [tuple(ast.literal_eval(beacon.json()).values() )for beacon in beacons]
 	values = [(str(uuid_),) + val[i] for i in range(len(val))]
-	beacons.append({'session_uuid':str(uuid_)})
 	insert_query ='INSERT INTO beacons (uuid,from_,id,rssi,until) VALUES (%s,%s,%s,%s,%s)' 
 	cur.executemany(insert_query,values)
 	conn.commit()
-	return beacons
+	return {'session_uuid':str(uuid_)}
 
 def find_one(session_uuid):
 	conn = connect()
-	cur = conn.cursor()
-	find_query = 'SELECT (from_,id,rssi,until) FROM beacons WHERE (uuid = %s)'
+	cur = conn.cursor(cursor_factory=DictCursor)
+	find_query = 'SELECT from_, id, rssi, until FROM beacons WHERE (uuid = %s)'
 	cur.execute(find_query,(session_uuid,))
 	response = cur.fetchall()
-	resp = [response[i][0].strip("'()").split('"') for i in range(len(response))]
-	li_be = [dict.fromkeys(beacons_keys_list,None) for i in range(len(resp))]
-	for li,re in zip(li_be,resp):
-		li["from_"] = re[1]
-		li["id"] = re[2].strip(',')
-		li["rssi"] = list(map(int, re[3].strip('{}').split(',')))
-		li["until"] = re[5]
-	return li_be
+
+	data = [dict(row) for row in response]
+
+	return data
 
 def update(uuid_,session,up_session):
 	conn = connect()
