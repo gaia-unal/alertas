@@ -2,7 +2,7 @@ import psycopg2
 import uuid
 import ast
 import json
-from psycopg2.extras import DictCursor
+from psycopg2.extras import DictCursor, execute_values
 
 beacons_keys_list = ["from_","id","rssi","until"]
 
@@ -46,29 +46,19 @@ def find_one(session_uuid):
 
 	return data
 
-def update(uuid_,session,up_session):
+def update(uuid_, beacons):
 	conn = connect()
 	cur = conn.cursor()
-	insert_values = list()
-	update_values = list()
-	val_up_se = [tuple(ast.literal_eval(sess.json()).values() )for sess in up_session]
-	id_se = [se['id']for se in session]
-	values_up_se = [(str(uuid_),) + val_up_se[i] for i in range(len(val_up_se))]
-	for va in values_up_se:
-		if va[2] not in id_se:
-			insert_values.append(va)
-		else:
-			update_values.append(tuple([va[3],va[4],va[0],va[2]]))
-	if len(update_values) != 0:
-		update_query = 'UPDATE beacons set rssi = %s , until = %s WHERE (uuid = %s and id = %s)'
-		cur.executemany(update_query,update_values)
-		conn.commit()
-	if len(insert_values) != 0:
-		insert_query ='INSERT INTO beacons (uuid,from_,id,rssi,until) VALUES (%s,%s,%s,%s,%s)' 
-		cur.executemany(insert_query,insert_values)
-		conn.commit()
+	
+	columns = beacons[0].keys()
+	query  = 'INSERT INTO beacons (uuid, {}) VALUES %s ON CONFLICT (uuid, id) DO UPDATE SET rssi = EXCLUDED.rssi, until = EXCLUDED.until'.format(','.join(columns))
+	values = [[uuid_, *[value for value in beacon.values()]]  for beacon in beacons]
+	execute_values(cur, query, values)
+	conn.commit()
+	
 	up_ss = find_one(uuid_)
-	up_ss.append({"uuid":str(uuid_)})
+	up_ss.append({"uuid": str(uuid_)})
+
 	return up_ss
 
 

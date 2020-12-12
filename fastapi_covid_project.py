@@ -38,11 +38,8 @@ def update_by_uuid(uuid, patch: List[BeaconPatchSchema], request: Request):
 		if session is None:
 			raise HTTPException(404)
 
-		session_model = [ Beacon(**session[i]) for i in range(len(session)) ]
-		update_beacons = [patch[i].dict(exclude_unset = True) for i in range(len(patch))]
-		update_session = [se_mo.copy(update = up_be) for se_mo,up_be in zip(session_model,update_beacons)]
-		print(update_session)
-		up_session = python_conn.update(uuid,session,update_session)
+		beacons = [dict(beacon) for beacon in patch ]
+		up_session = python_conn.update(uuid, beacons)
 
 		return up_session
 	else:
