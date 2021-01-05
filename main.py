@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Request, HTTPException
 from manager import verbs_functions_for_db as functions_db
-from typing import Optional, List
+from typing import List
 from manager.schemas.beacon import Beacon
 
 app = FastAPI()
