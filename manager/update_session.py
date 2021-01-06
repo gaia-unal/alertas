@@ -1,12 +1,12 @@
 from manager.schemas.beacons import Beacons
+from manager.models.beacon import Beacon
+from typing import List
+import uuid
 from sqlalchemy.dialects.postgresql import insert
-from manager.utils.db_session import session, conn
-from manager.get_session import get_session
+from manager.utils.db_session import conn
 
-def update_session(uuid_, beacons):
-    columns = beacons[0].keys()
-    values = [[uuid_, *[value for value in beacon.values()]]  for beacon in beacons]
-    beacons_values = [{'uuid':val[0],'id':val[2],'from_':val[1],'until':val[4], 'rssi':val[3]} for val in values]
+def update_session(uuid_:uuid, coll_beacons: List[Beacon]):
+    beacons_values = [dict(beacon, uuid=str(uuid_)) for beacon in coll_beacons]
     stmt = insert(Beacons).values(beacons_values)
     stmt = stmt.on_conflict_do_update(
         index_elements = [Beacons.uuid,Beacons.id],
@@ -14,7 +14,4 @@ def update_session(uuid_, beacons):
     )
     conn.execute(stmt)
     
-    up_ss = get_session(uuid_)
-    up_ss.append({"uuid": str(uuid_)})
-    
-    return up_ss
+    return beacons_values

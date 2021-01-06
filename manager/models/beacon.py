@@ -7,3 +7,6 @@ class Beacon(BaseModel):
 	id : str
 	rssi : list
 	until : datetime 
+
+	class Config:
+		orm_mode = True

@@ -18,9 +18,7 @@ def update_by_uuid(uuid, patch: List[Beacon], request: Request):
 		if session is None:
 			raise HTTPException(404)
 
-		beacons = [dict(beacon) for beacon in patch ]
-		up_session = update_session.update_session(uuid, beacons)
-
+		up_session = update_session.update_session(uuid, patch)
 		return up_session
 	else:
 		raise HTTPException(400)
