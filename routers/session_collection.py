@@ -6,7 +6,7 @@ from manager.models.beacon import Beacon
 router = APIRouter()
 
 @router.get("/session/{uuid}" ,response_model = List[Beacon])
-def get_beacon_by_uuid(uuid):
+def get_session_by_uuid(uuid):
 	session = get_session.get_session(uuid)
 	if session is None:
 		raise HTTPException(404)

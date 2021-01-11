@@ -1,11 +1,12 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class Beacon(BaseModel):
-	from_ : datetime
+class BeaconLocation(BaseModel):
 	id : str
-	rssi : list
+	from_ : datetime
 	until : datetime 
+	location : str
+	status : bool
 
 	class Config:
 		orm_mode = True
