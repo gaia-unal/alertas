@@ -1,12 +1,16 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 class BeaconLocation(BaseModel):
 	id : str
-	from_ : datetime
-	until : datetime 
 	location : str
-	status : bool
+	from_ : datetime
+	until : Optional[datetime] = None
+	active : Optional[bool] = None
 
 	class Config:
 		orm_mode = True
+
+class BeaconLocationName(BaseModel):
+	name : str
