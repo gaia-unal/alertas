@@ -12,11 +12,6 @@ def add_beacon_location(id: str, location_name: BeaconLocationName):
     beacon = add_beacon(beacon_location)
     return beacon
 
-@router.put("/beacon/{id}/{deactivate}")
+@router.patch("/beacon/{id}/{deactivate}")
 def update_beacon_location(id, request: Request):
     update_beacon(id)
-    #if "PATCH" == request.headers.get("X-HTTP-Method-Override"):
-    #    print('HERE')
-    #    update_beacon(id)
-    #else:
-    #    raise HTTPException(400)

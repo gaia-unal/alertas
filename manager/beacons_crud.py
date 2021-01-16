@@ -10,6 +10,7 @@ from manager.models.beacon_location import BeaconLocation
 import uuid
 from typing import List
 from datetime import datetime
+from sqlalchemy import and_
 
 def add_beacon(beacon_location: BeaconLocation):
     uuid_ = str(uuid.uuid4())
@@ -25,3 +26,6 @@ def update_beacon(beacon_id: str):
 
 def get_beacons(beacon_id: str):
     return session.query(BeaconsLocation).filter(BeaconsLocation.id == beacon_id).all()
+
+def get_beacons_with_filters(values: dict):
+    return session.query(BeaconsLocation).filter(and_(getattr(BeaconsLocation,item) == value for item, value in values.items())).all()
