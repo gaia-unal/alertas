@@ -4,7 +4,7 @@ from sqlalchemy.dialects.postgresql import UUID
 
 Base = declarative_base()
 
-class BeaconsLocation(Base):
+class BeaconsLocationH(Base):
 
     __tablename__ = 'beacons_location_history'
     
@@ -14,4 +14,3 @@ class BeaconsLocation(Base):
     from_ = Column(DateTime)
     until = Column(DateTime)
     active = Column(Boolean, default=True)
-

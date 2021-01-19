@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
 
-class BeaconLocation(BaseModel):
+class BeaconsLocation(BaseModel):
 	id : str
 	location : str
 	from_ : datetime

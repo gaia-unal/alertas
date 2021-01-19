@@ -1,13 +1,14 @@
-from fastapi import APIRouter, HTTPException
-from manager.session_crud import get_session
+from fastapi import HTTPException
+from routers import router
+from manager import sessions
+from manager.schemas.beacons import Beacon
+
 from typing import List
-from manager.models.beacon import Beacon
+import uuid
 
-router = APIRouter()
-
-@router.get("/session/{uuid}" ,response_model = List[Beacon])
-def get_session_by_uuid(uuid):
-	session = get_session(uuid)
+@router.get("/sessions/{uuid}" ,response_model = List[Beacon])
+def get_one(uuid):
+	session = sessions.get_one(uuid)
 	if session is None:
 		raise HTTPException(404)
 	return session
